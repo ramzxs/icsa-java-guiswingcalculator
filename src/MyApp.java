@@ -4,19 +4,14 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class MyApp extends JFrame {
-
     JPanel panelMain;
+
     JTextField txtExpression;
     JButton btn0, btn1, btn2, btn3, btn4, btn5, btn6, btn7, btn8, btn9;
     JButton btnEqual, btnPlus, btnMinus, btnTimes, btnDivide, btnPercent;
 
     ActionListener actionListenerNumbers;
     ActionListener actionListenerOperators;
-
-    String termLeft = "";
-    String opPrevious = "";
-    String termRight = "";
-    String opCurrent = "";
 
 
     public static void main(String[] args) {
@@ -26,6 +21,7 @@ public class MyApp extends JFrame {
     public MyApp() {
         this.setTitle("Java GUI Swing Calculator");
         this.setSize(800, 600);
+        this.setResizable(false);
 
         Font f1 = new Font("Arial", Font.PLAIN, 24);
         Font f2 = new Font("Arial", Font.BOLD, 32);
@@ -43,6 +39,7 @@ public class MyApp extends JFrame {
         txtExpression = new JTextField();
         txtExpression.setFont(f2);
         txtExpression.setHorizontalAlignment(SwingConstants.RIGHT);
+        txtExpression.setEditable(false);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 3;
@@ -119,7 +116,7 @@ public class MyApp extends JFrame {
         gbc.gridx = 1;
         gbc.gridy = 4;
         gbc.gridwidth = 2;
-        panelMain.add(btnEqual, gbc);
+        panelMain.add(btnEqual, gbc); // TODO
 
         btnPlus = new JButton("+");
         btnPlus.setFont(f1);
@@ -153,28 +150,21 @@ public class MyApp extends JFrame {
         panelMain.add(btnPercent, gbc);
 
         this.add(panelMain);
-        this.setVisible(true);
-
 
 
         // EVENT HANDLERS
-
-        // NUMBERS
-        btn0.setActionCommand("0");
-        btn1.setActionCommand("1");
-        btn2.setActionCommand("2");
-        btn3.setActionCommand("3");
-        btn4.setActionCommand("4");
-        btn5.setActionCommand("5");
-        btn6.setActionCommand("6");
-        btn7.setActionCommand("7");
-        btn8.setActionCommand("8");
-        btn9.setActionCommand("9");
 
         actionListenerNumbers = new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 setNumber(e.getActionCommand());
+            }
+        };
+
+        actionListenerOperators = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                setOperator(e.getActionCommand());
             }
         };
 
@@ -189,90 +179,106 @@ public class MyApp extends JFrame {
         btn8.addActionListener(actionListenerNumbers);
         btn9.addActionListener(actionListenerNumbers);
 
-
-        // OPERATORS
-
-        btnEqual.setActionCommand("=");
-        btnPlus.setActionCommand("+");
-        btnMinus.setActionCommand("-");
-        btnTimes.setActionCommand("*");
-        btnDivide.setActionCommand("/");
-        btnPercent.setActionCommand("%");
-
-        actionListenerOperators = new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                setOperator(e.getActionCommand());
-            }
-        };
-
         btnEqual.addActionListener(actionListenerOperators);
         btnPlus.addActionListener(actionListenerOperators);
         btnMinus.addActionListener(actionListenerOperators);
         btnTimes.addActionListener(actionListenerOperators);
         btnDivide.addActionListener(actionListenerOperators);
         btnPercent.addActionListener(actionListenerOperators);
+
+        this.setVisible(true);
     }
+
+
+    String termLeft = "";
+    String opPrevious = "";
+    String termRight = "";
+    String opCurrent = "";
 
 
     private void setNumber(String n) {
-        if (opPrevious.equals("")) {
-            termLeft += n;
+        System.out.println("Clicked " + n);
+
+        if (termLeft.equals("")) {
+            termLeft = n;
         } else {
-            termRight += n;
+            if (opPrevious.equals("")) {
+                termLeft = termLeft + n;
+            } else {
+                termRight = termRight + n;
+            }
         }
 
-        txtExpression.setText(termLeft + " " + opPrevious + " " + termRight + " " + opCurrent + " ");
+        displayText();
     }
 
     private void setOperator(String op) {
-        if (opPrevious.equals("")) {
-            if (!op.equals("%") && !op.equals("=")) {
-                opPrevious = op;
-            }
+        System.out.println("Clicked " + op);
+
+        if (termLeft.equals("")) {
+            return;
         } else {
-            if (!termRight.equals("")) {
-                opCurrent = op;
-            } else {
+            if (opPrevious.equals("")) {
                 opPrevious = op;
+            } else {
+                if (termRight.equals("")) {
+                    opPrevious = op;
+                } else {
+                    opCurrent = op;
+                }
             }
         }
 
+        displayText();
+    }
+
+    private void displayText() {
         txtExpression.setText(termLeft + " " + opPrevious + " " + termRight + " " + opCurrent + " ");
 
-        if (!opCurrent.equals("")) { // "="
+        if (!opCurrent.equals("")) {
+            float left = Float.parseFloat(termLeft);        // 100
+            float right = Float.parseFloat(termRight);      // 25%  = 25
+            float result = 0;
+
             if (opCurrent.equals("%")) {
-                float left = Float.parseFloat(termLeft);
-                float right = Float.parseFloat(termRight);
-                float result = left * (right / 100);
+                right = left * (right / 100);
+            }
 
-                termRight = String.valueOf(result);
-                opCurrent = "";
+            switch (opPrevious) {
+                case "+" -> result = left + right;
+                case "-" -> result = left - right;
+                case "*" -> result = left * right;
+                case "/" -> result = left / right;
+            }
 
-                txtExpression.setText(termLeft + " " + opPrevious + " " + termRight + " " + opCurrent + " ");
-            } else {
-                float result = 0;
-                switch (opPrevious.charAt(0)) {  // "+"
-                    case '+':
-                        result = Float.parseFloat(termLeft) + Float.parseFloat(termRight);
-                        break;
-                    case '-':
-                        result = Float.parseFloat(termLeft) - Float.parseFloat(termRight);
-                        break;
-                    case '*':
-                        result = Float.parseFloat(termLeft) * Float.parseFloat(termRight);
-                        break;
-                    case '/':
-                        result = Float.parseFloat(termLeft) / Float.parseFloat(termRight);
-                        break;
-                }
+            String strResult = String.valueOf(result);
+            int wholeNumber = (int) result;
+            float resultZero = result - wholeNumber;
+            if (resultZero == 0.0f) {
+                strResult = String.valueOf(wholeNumber);
+            }
 
-                txtExpression.setText(termLeft + " " + opPrevious + " " + termRight + " " + opCurrent + " " + result + " ");
-
+            if (opCurrent.equals("=")) {
+                // txtExpression.setText(termLeft + " " + opPrevious + " " + termRight + " " + opCurrent + " " + strResult);
+                txtExpression.setText(strResult);
                 termLeft = "";
                 opPrevious = "";
                 termRight = "";
                 opCurrent = "";
+            } else {
+                if (opCurrent.equals("%")) {
+                    termLeft = strResult;
+                    opPrevious = "";
+                    termRight = "";
+                    opCurrent = "";
+                    txtExpression.setText(termLeft);
+                } else {
+                    termLeft = strResult;
+                    opPrevious = opCurrent;
+                    termRight = "";
+                    opCurrent = "";
+                    txtExpression.setText(termLeft + " " + opPrevious);
+                }
             }
         }
     }
